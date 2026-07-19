@@ -10,11 +10,16 @@ services:
     name: n8n-redis
     plan: free
     region: oregon
+    ipAllowList: []
 
   - type: web
     name: n8n
     runtime: docker
-    dockerImage: n8nio/n8n:latest
+    # --- BUILD DESDE TU REPO GITHUB ---
+    repo: https://github.com/realfkt/n8n
+    branch: master
+    dockerfilePath: ./Dockerfile
+    # ----------------------------------
     plan: free
     region: oregon
     envVars:
