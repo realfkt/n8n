@@ -10,7 +10,7 @@ services:
     name: n8n-redis
     plan: free
     region: oregon
-    ipAllowList: []
+  
 - type: web
     name: n8n
     runtime: docker
