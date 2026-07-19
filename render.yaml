@@ -10,7 +10,6 @@ services:
     name: n8n-redis
     plan: free
     region: oregon
-  
 - type: web
     name: n8n
     runtime: docker
