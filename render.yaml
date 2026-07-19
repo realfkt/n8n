@@ -1,41 +1,25 @@
-services:
-  # ---------------------------------------------------------
-  # 1. POSTGRESQL (Managed) - NO TIENE runtime, NI startCommand
-  # ---------------------------------------------------------
-  - type: pserv                 # <--- TIPO CRÍTICO: 'pserv' (Managed Postgres)
-    name: n8n-db
+databases:
+  - name: n8n-db
+    databaseName: n8n
+    user: n8n
     plan: free
     region: oregon
-    # NO pongas: runtime, startCommand, buildCommand, repo, branch, dockerfilePath
 
-  # ---------------------------------------------------------
-  # 2. REDIS (Managed) - NO TIENE runtime, NI startCommand
-  # ---------------------------------------------------------
-  - type: redis                 # <--- TIPO CRÍTICO: 'redis' (Managed Redis)
+services:
+  - type: redis
     name: n8n-redis
     plan: free
     region: oregon
-    ipAllowList: []             # OBLIGATORIO en Redis Free
-    # NO pongas: runtime, startCommand, maxmemoryPolicy
+    ipAllowList: []
 
-  # ---------------------------------------------------------
-  # 3. N8N WEB SERVICE (Este SÍ es 'web' y SÍ necesita build config)
-  # ---------------------------------------------------------
-  - type: web                   # <--- TIPO: 'web' (Servicio custom Docker)
+  - type: web
     name: n8n
-    runtime: docker             # <--- SOLO ESTE servicio lleva 'runtime: docker'
-    repo: https://github.com/realfkt/n8n
-    branch: master
-    dockerfilePath: ./Dockerfile
+    runtime: docker
+    # USA IMAGEN PRE-COMPILADA (No compila, no gasta RAM build)
+    dockerImage: n8nio/n8n:latest
     plan: free
     region: oregon
-    # DISCO: Free tier Web Service NO soporta discos persistentes (comentado/eliminado)
-    # disk:
-    #   name: n8n-data
-    #   mountPath: /home/node/.n8n
-    #   sizeGB: 1
     envVars:
-      # General
       - key: NODE_ENV
         value: production
       - key: GENERIC_TIMEZONE
@@ -47,15 +31,13 @@ services:
       - key: N8N_PROTOCOL
         value: https
       - key: WEBHOOK_URL
-        value: https://n8n.onrender.com  # Cambia tras 1er deploy por la URL real
-      # Auth
+        value: https://n8n.onrender.com
       - key: N8N_BASIC_AUTH_ACTIVE
         value: "true"
       - key: N8N_BASIC_AUTH_USER
         value: admin
       - key: N8N_BASIC_AUTH_PASSWORD
-        sync: false  # Configura manual en Dashboard > Environment
-      # Postgres (Auto-link)
+        sync: false
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_DATABASE
@@ -78,10 +60,9 @@ services:
         fromDatabase:
           name: n8n-db
           property: password
-      # Redis (Queue Mode)
       - key: QUEUE_BULL_REDIS_HOST
         fromService:
-          type: redis        # OBLIGATORIO en fromService para redis
+          type: redis
           name: n8n-redis
           property: host
       - key: QUEUE_BULL_REDIS_PORT
@@ -94,7 +75,6 @@ services:
           type: redis
           name: n8n-redis
           property: connectionString
-      # Queue Mode
       - key: EXECUTIONS_MODE
         value: queue
       - key: QUEUE_HEALTH_CHECK_ACTIVE
