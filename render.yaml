@@ -11,12 +11,10 @@ services:
     plan: free
     region: oregon
     ipAllowList: []
-
-  - type: web
+- type: web
     name: n8n
     runtime: docker
-    # USA IMAGEN PRE-COMPILADA (No compila, no gasta RAM build)
-    dockerImage: n8nio/n8n:latest
+    dockerImage: n8nio/n8n:latest   # <-- 2 espacios, camelCase exacto
     plan: free
     region: oregon
     envVars:
@@ -81,3 +79,4 @@ services:
         value: "true"
     healthCheckPath: /healthz
     autoDeploy: true
+ 
