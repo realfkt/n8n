@@ -6,14 +6,17 @@ databases:
     region: oregon
 
 services:
+  # 1. REDIS
   - type: redis
     name: n8n-redis
     plan: free
     region: oregon
-- type: web
+
+  # 2. N8N WEB SERVICE
+  - type: web
     name: n8n
     runtime: docker
-    dockerImage: n8nio/n8n:latest   # <-- 2 espacios, camelCase exacto
+    dockerImage: n8nio/n8n:latest
     plan: free
     region: oregon
     envVars:
@@ -78,4 +81,13 @@ services:
         value: "true"
     healthCheckPath: /healthz
     autoDeploy: true
- 
+Regla visual para no fallar:
+services:          <- Columna 0
+  - type: redis    <- 2 espacios + guion
+    name: ...      <- 4 espacios (2 más que el guion)
+    plan: ...      <- 4 espacios
+  - type: web      <- 2 espacios + guion
+    runtime: ...   <- 4 espacios
+    envVars:       <- 4 espacios
+      - key: ...   <- 6 espacios (2 más que envVars:)
+        value: ... <- 8 espacios
