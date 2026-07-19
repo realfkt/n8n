@@ -1,33 +1,30 @@
 services:
-  # 1. Base de Datos PostgreSQL
+  # 1. Base de Datos PostgreSQL (Managed)
   - type: pserv
     name: n8n-db
     plan: free
     region: oregon
 
-  # 2. Redis para Colas
+  # 2. Redis para Colas (Queue Mode)
   - type: redis
     name: n8n-redis
     plan: free
     region: oregon
-    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  # OBLIGATORIO: [] = permite todas las IPs (necesario para que n8n se conecte)
 
-  # 3. Servicio Web n8n (BUILD DESDE TU REPO GITHUB)
+  # 3. Servicio Web n8n (Build desde GitHub)
   - type: web
     name: n8n
     runtime: docker
-    # --- CONFIGURACIÓN BUILD DESDE GITHUB ---
     repo: https://github.com/realfkt/n8n
     branch: master
-    dockerfilePath: ./Dockerfile  # El Dockerfile oficial está en la raíz del fork
-    # ----------------------------------------
+    dockerfilePath: ./Dockerfile
     plan: free
     region: oregon
-    disk:
-      name: n8n-data
-      mountPath: /home/node/.n8n
-      sizeGB: 1
+    # DISK ELIMINADO: Free tier NO soporta discos persistentes en Web Services.
+    # n8n guarda workflows/credenciales en Postgres. Archivos binarios se pierden en redeploy (limitación Free).
     envVars:
+      # Config General
       - key: NODE_ENV
         value: production
       - key: GENERIC_TIMEZONE
@@ -38,14 +35,17 @@ services:
         value: "5678"
       - key: N8N_PROTOCOL
         value: https
+      # URL Pública (Actualiza tras primer deploy con la URL real que te dé Render)
       - key: WEBHOOK_URL
         value: https://n8n.onrender.com
+      # Auth Básica
       - key: N8N_BASIC_AUTH_ACTIVE
         value: "true"
       - key: N8N_BASIC_AUTH_USER
         value: admin
       - key: N8N_BASIC_AUTH_PASSWORD
-        sync: false
+        sync: false  # Se configura manual en Dashboard > Environment > "Add Secret"
+      # Conexión PostgreSQL (Auto-inyectada desde 'n8n-db')
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_DATABASE
@@ -68,18 +68,23 @@ services:
         fromDatabase:
           name: n8n-db
           property: password
+      # Conexión Redis (Auto-inyectada desde 'n8n-redis')
       - key: QUEUE_BULL_REDIS_HOST
         fromService:
+          type: redis          # OBLIGATORIO: tipo de servicio origen
           name: n8n-redis
           property: host
       - key: QUEUE_BULL_REDIS_PORT
         fromService:
+          type: redis          # OBLIGATORIO
           name: n8n-redis
           property: port
       - key: QUEUE_BULL_REDIS_PASSWORD
         fromService:
+          type: redis          # OBLIGATORIO
           name: n8n-redis
-          property: password
+          property: connectionString # Redis free no expone 'password' solo, usa connectionString
+      # Modo Cola (Escalable)
       - key: EXECUTIONS_MODE
         value: queue
       - key: QUEUE_HEALTH_CHECK_ACTIVE
