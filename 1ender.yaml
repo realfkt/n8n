@@ -1,0 +1,98 @@
+# render.yaml - Blueprint para n8n en Render Free Tier
+# Ubicación: RAÍZ del repo (realfkt/n8n)
+
+services:
+  # 1. BASE DE DATOS POSTGRESQL (Gratis 90 días / 1GB)
+  - type: pserv
+    name: n8n-db
+    plan: free
+    region: oregon
+    postgresMajorVersion: 15
+
+  # 2. REDIS (Opcional, para colas/rate limiting - Gratis 25MB)
+  - type: redis
+    name: n8n-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
+  # 3. APP PRINCIPAL N8N
+  - type: web
+    name: n8n
+    runtime: docker
+    repo: https://github.com/realfkt/n8n
+    branch: master
+    dockerImage: n8nio/n8n:latest
+    plan: free
+    region: oregon
+    disk:
+      name: n8n-data
+      mountPath: /home/node/.n8n
+      sizeGB: 1
+    envVars:
+      # --- CONFIG BÁSICA ---
+      - key: NODE_ENV
+        value: production
+      - key: GENERIC_TIMEZONE
+        value: America/Santiago
+      - key: N8N_HOST
+        value: 0.0.0.0
+      - key: N8N_PORT
+        value: "5678"
+      - key: N8N_PROTOCOL
+        value: https
+      - key: WEBHOOK_URL
+        value: https://n8n.onrender.com
+
+      # --- AUTENTICACIÓN (CAMBIA PASSWORD EN RENDER DASHBOARD) ---
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: "true"
+      - key: N8N_BASIC_AUTH_USER
+        value: "admin"
+      - key: N8N_BASIC_AUTH_PASSWORD
+        sync: false
+
+      # --- BASE DE DATOS POSTGRES (Conexión automática via Render) ---
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_DATABASE
+        fromDatabase:
+          name: n8n-db
+          property: database
+      - key: DB_POSTGRESDB_HOST
+        fromDatabase:
+          name: n8n-db
+          property: host
+      - key: DB_POSTGRESDB_PORT
+        fromDatabase:
+          name: n8n-db
+          property: port
+      - key: DB_POSTGRESDB_USER
+        fromDatabase:
+          name: n8n-db
+          property: user
+      - key: DB_POSTGRESDB_PASSWORD
+        fromDatabase:
+          name: n8n-db
+          property: password
+
+      # --- REDIS (Opcional, para colas) ---
+      - key: QUEUE_BULL_REDIS_HOST
+        fromService:
+          name: n8n-redis
+          property: host
+      - key: QUEUE_BULL_REDIS_PORT
+        fromService:
+          name: n8n-redis
+          property: port
+      - key: QUEUE_BULL_REDIS_PASSWORD
+        fromService:
+          name: n8n-redis
+          property: password
+      - key: EXECUTIONS_MODE
+        value: queue
+      - key: QUEUE_HEALTH_CHECK_ACTIVE
+        value: "true"
+
+    healthCheckPath: /healthz
+    autoDeploy: true
