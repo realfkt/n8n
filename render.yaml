@@ -1,8 +1,8 @@
 # render.yaml - Blueprint para n8n en Render Free Tier
-# Guarda esto en la RAÍZ de tu repo realfkt/n8n
+# Ubicación: RAÍZ del repo (realfkt/n8n)
 
 services:
-  # 1. BASE DE DATOS POSTGRESQL (Gratis 90 días / 1GB en Render)
+  # 1. BASE DE DATOS POSTGRESQL (Gratis 90 días / 1GB)
   - type: pserv
     name: n8n-db
     plan: free
@@ -22,12 +22,9 @@ services:
     runtime: docker
     repo: https://github.com/realfkt/n8n
     branch: master
-    # Usamos la imagen oficial de n8n, no necesitamos Dockerfile propio
     dockerImage: n8nio/n8n:latest
     plan: free
     region: oregon
-    # ¡CLAVE! Disco persistente para que no pierdas el binario de n8n / config si no usas DB externa para todo
-    # Pero como usamos Postgres externo, el disco es secundario. Lo pongo por si acaso.
     disk:
       name: n8n-data
       mountPath: /home/node/.n8n
@@ -45,17 +42,15 @@ services:
       - key: N8N_PROTOCOL
         value: https
       - key: WEBHOOK_URL
-        # Render la rellena automáticamente si usas 'fromService', pero para n8n es mejor hardcodear la URL final
-        # La cambias manualmente en Render Dashboard después del primer deploy si no sabes la URL exacta aún.
         value: https://n8n.onrender.com
 
-      # --- AUTENTICACIÓN (CAMBIA ESTOS VALORES EN RENDER DASHBOARD DESPUÉS) ---
+      # --- AUTENTICACIÓN (CAMBIA PASSWORD EN RENDER DASHBOARD) ---
       - key: N8N_BASIC_AUTH_ACTIVE
         value: "true"
       - key: N8N_BASIC_AUTH_USER
         value: "admin"
       - key: N8N_BASIC_AUTH_PASSWORD
-        sync: false # IMPORTANTE: Ponla manual en Render Dashboard -> Environment -> "Add Secret"
+        sync: false
 
       # --- BASE DE DATOS POSTGRES (Conexión automática via Render) ---
       - key: DB_TYPE
@@ -94,7 +89,6 @@ services:
         fromService:
           name: n8n-redis
           property: password
-      # Habilitar modo queue con redis (recomendado para producción)
       - key: EXECUTIONS_MODE
         value: queue
       - key: QUEUE_HEALTH_CHECK_ACTIVE
@@ -102,4 +96,7 @@ services:
 
     healthCheckPath: /healthz
     autoDeploy: true
-Botón verde Commit changes → Commit directly to master branch.
+3 Pasos Clave para que no falle:
+Indentación: El YAML usa 2 espacios (no tabs). El bloque de arriba ya viene correcto. No añadas espacios extra al principio de las líneas.
+Nombre del archivo: Debe ser exactamente render.yaml (en la cajita donde dice "Name your file...").
+Commit: Una vez pegado, verás que el botón verde Commit changes se habilita sin error rojo. Dale → Commit directly to master branch → Commit changes.
