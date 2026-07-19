@@ -20,8 +20,7 @@ services:
   - type: web
     name: n8n
     runtime: docker
-    repo: https://github.com/realfkt/n8n
-    branch: master
+    
     dockerImage: n8nio/n8n:latest
     plan: free
     region: oregon
